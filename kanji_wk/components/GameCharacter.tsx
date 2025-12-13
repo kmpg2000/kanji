@@ -38,7 +38,7 @@ export const GameCharacter: React.FC<Props> = ({ theme, color, expression, onCli
       className="w-32 h-32 md:w-48 md:h-48 relative transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
       onClick={onClick}
     >
-      <svg viewBox="0 0 200 200" className={`w-full h-full drop-shadow-xl ${isInhaling ? 'animate-pulse' : ''}`}>
+      <svg viewBox="0 0 200 200" className={`w-full h-full drop-shadow-xl ${isInhaling ? 'animate-pulse' : ''}`} style={{ overflow: 'visible' }}>
         
         {/* --- BACK LAYER (Ears/Tails) --- */}
         {theme === 'PIKACHU' && (
@@ -75,7 +75,20 @@ export const GameCharacter: React.FC<Props> = ({ theme, color, expression, onCli
         {/* Main Circle */}
         <circle cx="100" cy="100" r="75" fill={bodyColor} stroke={strokeColor} strokeWidth="3" />
 
-        {/* --- THEME SPECIFIC BODY DETAILS --- */}
+        {/* --- THEME SPECIFIC BODY DETAILS (Hats, etc) --- */}
+
+        {theme === 'KIRBY' && (
+            <>
+               {/* Blue Cap Dome - Raised ~15px (y=65 -> y=50) */}
+               <path d="M 35 50 Q 100 0 165 50" fill="#3b82f6" stroke={strokeColor} strokeWidth="3" />
+               {/* Cap Brim - Raised ~15px */}
+               <path d="M 30 50 Q 100 80 170 50 Q 100 40 30 50 Z" fill="#60a5fa" stroke={strokeColor} strokeWidth="3" />
+               {/* White Badge - Raised */}
+               <circle cx="100" cy="30" r="11" fill="white" stroke={strokeColor} strokeWidth="2" />
+               {/* Kanji 'Kan' - Raised */}
+               <text x="100" y="35" fontSize="10" textAnchor="middle" fill="#3b82f6" fontWeight="900" style={{fontFamily: 'sans-serif'}} dy=".3em">漢</text>
+            </>
+        )}
         
         {theme === 'MARIO' && (
             <>

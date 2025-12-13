@@ -47,18 +47,51 @@ const App: React.FC = () => {
   const [scannedProblems, setScannedProblems] = useState<KanjiProblem[] | null>(null);
   
   // Visit Count
-  const [visitCount, setVisitCount] = useState(0);
+  const [visitCount, setVisitCount] = useState<number | null>(null);
+  const [isLocalCount, setIsLocalCount] = useState(false);
+  const hasCounted = useRef(false);
 
   useEffect(() => {
-    try {
-        const stored = localStorage.getItem('site_visit_count');
-        const count = stored ? parseInt(stored, 10) : 0;
-        const newCount = count + 1;
-        setVisitCount(newCount);
-        localStorage.setItem('site_visit_count', newCount.toString());
-    } catch (e) {
-        console.error("Local storage access failed", e);
-    }
+    // Prevent double execution in React StrictMode
+    if (hasCounted.current) return;
+    hasCounted.current = true;
+
+    const updateVisitorCount = async () => {
+        try {
+            // Attempt to use a global counter (countapi.xyz)
+            // Updated Namespace to v2 to reset/stabilize
+            const namespace = 'kanji-sui-komi-v2';
+            const key = 'visits';
+            
+            // "hit" endpoint increments and returns the new value
+            const response = await fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                setVisitCount(data.value);
+                setIsLocalCount(false);
+            } else {
+                throw new Error("CountAPI response was not ok");
+            }
+        } catch (error) {
+            console.warn("Global counter service unavailable, falling back to local storage.", error);
+            // Fallback to local storage logic
+            try {
+                const stored = localStorage.getItem('local_visit_count');
+                const count = stored ? parseInt(stored, 10) : 0;
+                const newCount = count + 1;
+                setVisitCount(newCount);
+                setIsLocalCount(true);
+                localStorage.setItem('local_visit_count', newCount.toString());
+            } catch (e) {
+                console.error("Local storage access failed", e);
+                setVisitCount(1);
+                setIsLocalCount(true);
+            }
+        }
+    };
+
+    updateVisitorCount();
   }, []);
 
   // Sync theme with audio service
@@ -339,9 +372,14 @@ const App: React.FC = () => {
   const renderMenu = () => (
     <div className={`flex flex-col items-center justify-center min-h-screen p-4 space-y-6 max-w-lg mx-auto relative overflow-hidden transition-colors duration-500 ${themeStyles.bg}`}>
       
-      {/* Visit Count */}
-      <div className="absolute top-4 left-4 bg-white/50 px-3 py-1 rounded-full text-xs font-bold text-gray-500 backdrop-blur-sm border border-white/60">
-        訪問者数: {visitCount}
+      {/* Visit Count & Version */}
+      <div className="absolute top-4 left-4 z-20 flex flex-col items-start gap-1">
+        <div className="bg-white/50 px-3 py-1 rounded-full text-xs font-bold text-gray-500 backdrop-blur-sm border border-white/60">
+            アクセス数: {visitCount !== null ? visitCount : '...'} {isLocalCount && <span className="text-[10px] ml-1">(自分)</span>}
+        </div>
+        <div className="ml-1 text-[10px] text-gray-400 font-bold opacity-60">
+            ver{process.env.APP_VERSION}
+        </div>
       </div>
 
       <div className="text-center z-10 mt-4">
